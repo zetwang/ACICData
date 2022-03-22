@@ -1,0 +1,35 @@
+---
+title: "ACIC_Track2_Jacques_Merge"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r. library}
+library(tidyverse)
+```
+
+```{r, data}
+setwd("C:/Users/ajacques/OneDrive - RAND Corporation/R_Practice/ACIC Data Challenge/ACIC Edited or Merged Data/ACIC Track2")
+practice_track2 <- read.csv("acic_practice_0001.csv")
+practice_year_track2 <- read.csv("acic_practice_year_0001.csv")
+track2_full_df <- merge(practice_track2, practice_year_track2, by = "id.practice")
+```
+
+# Notes on 22 March 2022 Meeting 
+1. Data Propensity Score 
+2. Predicting the Outcome (Outcome Function)
+  Superlearner, (Ensemble of methods for predicting outcomes)
+  TMLE, Bart, Entropy Balancing, tree based models, GBM
+3. Data Visualization 
+  Leading to modeling 
+  Visualization of Estimates 
+
+Put into estimation, put a penalty on the outcome model. Provider structure to regualize around ground mean in the same away.....
+Regular out sized model and use propensity score, intercept for each provider with expectation zero. ---> Only question for track 1. Consider something that is fully interactive for the provider, each covariance changes with provider
+
+Treatment is the provider level 
+
+Summarize patient information then analyze in that direction. Track 2 does this already kinda? 
+Track 2 is easier to handle... 
