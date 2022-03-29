@@ -1,1 +1,47 @@
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
 
+```
+```{r, library}
+library(tidyverse)
+library(writexl) #Included to turn the data frame into an excel file 
+```
+
+```{r, data}
+setwd("C:/Users/ajacques/OneDrive - RAND Corporation/R_Practice/ACIC Data Challenge/ACIC Edited or Merged Data/ACIC Track2")
+
+practice_track2 <- read.csv("acic_practice_0001.csv")
+practice_year_track2 <- read.csv("acic_practice_year_0001.csv") 
+
+track2_full_df_0001 <- merge(practice_track2, practice_year_track2, by = "id.practice")
+```
+
+```{r, df to excel}
+write_xlsx(track2_full_df_0001, "C:/Users/ajacques/OneDrive - RAND Corporation/R_Practice/GitHub/ACICData//Track2_Merged_0001.xlsx")
+```
+
+
+
+```{r, track2_merge_all}
+setwd("C:/Users/ajacques/OneDrive - RAND Corporation/R_Practice/ACIC Data Challenge/track2/practice") 
+files <- list.files() # Takes current working directory and making a list of all the files 
+files <- gsub("acic_practice_|\\.csv", "", files) #This is taking out the extraneous string within each file name. The first backslash says what is coming is actually code not string. The second backslash is implementing the code, stating that the .csv is a string and not code. We need this because \. is usually as a string. The straight veritcal bar is an or statement. 
+setwd("..") # Going back to the parent folder above what we setwd() as. 
+getwd()
+merge_dgp_replicates <- function(replicate_id){ #taking replicate_id as a variable/argument in the function. The function itself comes after the {
+  #Throwing out the string "0001" and changing it into the actual number 1 to save memory
+  replicate_id       <- as.numeric(replicate_id) 
+  df_practice        <- read.csv(sprintf("practice/acic_practice_%s.csv", replicate_id)) #sprintf is replacing "%s" with the replicate_id. Formative string 
+  df_practice_year   <- read.csv(sprintf("practice_year/acic_practice_year_%s.csv", replicate_id)) %>% #same as above 
+                        merge(df_practice, ., by = "id.practice", type = "right" ) %>% #Doing type right: merging whats on the right to the left. Taking the top row and mergin it to the left. Going from left throws an erro becaue of multiple id "1"s. We want whaterve we are mergin to be a subset of what we are merging onto. The practice year has less "id.practice" repeated values than "df_practice"
+                        mutate(.,run_id = replicate_id)
+  return(df_practice_year) #Sends back to the main script what you made previously
+}
+df_complete <- plyr::ldply(files, merge_dgp_replicates, .progress = "text") #Saves one line of code than using lapply. first letter is the input, second is output. Take a list, send me back a dataframe. lapply is take a list, send a list. Multiple variations 
+
+```
+Inner mergre goof for minimal number. Chooses intelligently to go from. Inner merge gives the minimum by seeing both the left and the right and choosing which one is the minimum. Outer does a full dataset 
+
+```{r, write_csv}
+write.csv(df_complete, "C:/Users/ajacques/OneDrive - RAND Corporation/R_Practice/ACIC Data Challenge/ACIC Edited or Merged Data/ACIC Track2/track2_merged_all.csv", row.names=FALSE) 
+```
