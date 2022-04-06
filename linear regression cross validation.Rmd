@@ -1,0 +1,78 @@
+---
+title: "Linear Regression Cross Validation"
+author: "Zet Wang"
+date: '2022-04-06'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+requiredPackages <- c("readxl","here","ggplot2","caret")
+installedPackages <- installed.packages()[,"Package"]
+if(!all(c(requiredPackages) %in% installedPackages)) {
+  missing <- c(requiredPackages)[!requiredPackages %in% installedPackages]
+  stop(sprintf("Please install the following packages: %s", paste(missing, collapse = ", "))) 
+}
+purrr::walk(.x = requiredPackages,
+            .f = library,
+            character.only = T)
+```
+
+## Use Data
+
+Here I just use one (of 3400) merged data set as a demo
+```{r}
+df <- read_excel(here::here("Track2_Merged_0001.xlsx"))
+df$X2 <- as.factor(df$X2)
+df$X4 <- as.factor(df$X4)
+df$year <- as.factor(df$year)
+```
+
+## Examine outcome Y
+
+Take a look at outcome's distribution: comparing to individual health expenditure which can be seriously skewed, practice level average expenditure does not have this problem.
+```{r}
+df.y.dis <- ggplot(df, aes(Y))+
+  geom_histogram()
+df.y.dis
+```
+
+## Define a function to randomly partition dataset to k subsets
+```{r}
+partition <- function(x, k){
+    #Description: given a dataframe, randomly assign each record to one of x partitions.
+    #Argument: x = the dataframe to be processed by the function.
+    #Argument: k = number of subsets desired.
+    #Returns: a vector that indicates which partition each record is assigned to.
+    set.seed(100)
+    rand <- runif(nrow(x))
+    fold.no <- cut(rand, k, labels = FALSE)
+    return(fold.no)
+  }
+```
+
+## Fitting the linear regression model using cross-validation approach
+
+```{r}
+# step 1: model specification
+spec <- "Y ~ .-cv.group-post-V5_C_avg"
+
+# step 2: randomly assign each observation to one of the k group
+df$cv.group <- partition(df,5) 
+
+# step 3: generate a placeholder of length k for error measurement - mean squared error
+mse.lm <- rep(0,5) 
+
+# step 4: cross-validation process
+for(i in 1:5){
+  df.train <- df[df$cv.group!=i,] # define training data in this iteration
+  df.test <- df[df$cv.group==i,] # define test data in this iteration
+  fit.lm <- lm(spec, df.train) # fit your model
+  pred.lm <- predict(fit.lm, df.test) # predict outcome using test data
+  mse.lm[i] <- mean((pred.lm-df.test$Y)^2) # calculate mse for this iteration
+}
+
+# step 5: report the average value of mse for this cross validation process
+cv.mse.lm <- mean(mse.lm) 
+cv.mse.lm
+```
